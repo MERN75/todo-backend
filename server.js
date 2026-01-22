@@ -1,3 +1,4 @@
+// server.js
 const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql2');
@@ -7,18 +8,24 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// MySQL connection
+// MySQL connection (updated for Railway)
 const db = mysql.createConnection({
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'todo_app'
+  database: process.env.DB_NAME || 'todo_app',
+  port: process.env.DB_PORT || 3306
 });
 
 db.connect(err => {
-  if (err) return console.error('DB connection error:', err);
+  if (err) {
+    console.error('DB connection error:', err);
+    return;
+  }
   console.log('Connected to MySQL database');
 });
+
+// ----------- API ROUTES -------------
 
 // GET all tasks
 app.get('/api/tasks', (req, res) => {
@@ -62,7 +69,7 @@ app.put('/api/tasks/:id', (req, res) => {
   db.query(
     'UPDATE tasks SET title = ?, description = ? WHERE id = ?',
     [title, description || '', id],
-    (err, result) => {
+    (err) => {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ id, title, description });
     }
@@ -72,14 +79,14 @@ app.put('/api/tasks/:id', (req, res) => {
 // DELETE task
 app.delete('/api/tasks/:id', (req, res) => {
   const { id } = req.params;
-  db.query('DELETE FROM tasks WHERE id = ?', [id], (err, result) => {
+  db.query('DELETE FROM tasks WHERE id = ?', [id], (err) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ message: 'Task deleted' });
   });
 });
 
-// Start server
+// ---------- START SERVER ----------
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
